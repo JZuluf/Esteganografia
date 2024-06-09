@@ -2,7 +2,7 @@ import sys
 from basededatos import *
 from usuarios import *
 from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow, QApplication
+from PyQt5.QtWidgets import QMainWindow, QApplication, QMessageBox
 from typing import Any
 
 
@@ -28,6 +28,7 @@ class insertar:
             conexion = BaseDeDatos("bubble.db.elephantsql.com", 5432, "cnxcvolt", "3O13Dp1JaQF05JXHwl7FivVk-jwwxyVZ",
                                    "cnxcvolt")
             self.conexionExitosa = conexion.conectar()
+
     def insertarBD(self):
         nombre = self.nombre.text()
         apellido = self.apellido.text()
@@ -35,13 +36,24 @@ class insertar:
         contrasena = self.contrasena.text()
         email = self.email.text()
         rol = self.rol.text()
+
+        # Verificar si el email contiene '@'
+        if '@' not in email:
+            QMessageBox.warning(self.ui, 'Error', 'El email debe contener el carácter @')
+            return
+
+        # Verificar si el rol es 'admin' o 'user'
+        if rol not in ['admin', 'user']:
+            QMessageBox.warning(self.ui, 'Error', 'El rol debe ser "admin" o "user"')
+            return
+
         self.resultado.setText(nombre + " " + apellido + " " + cedula + " " + contrasena + " " + email + " " + rol)
         usuario = Usuario()
         try:
             if usuario.insertar(self.conexionExitosa, nombre, apellido, cedula, contrasena, email, rol):
                 print("Usuario ingresado correctamente")
             else:
-                print("Error en la creacion del usuario")
+                print("Error en la creación del usuario")
         except Exception as ex:
             print("Error en la conexión", type(ex))
 
