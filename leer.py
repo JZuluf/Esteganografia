@@ -67,6 +67,7 @@ class buscarArchivo:
     def __init__(self, ui):
         self.ui = ui
         self.ui.anadirarchivo.clicked.connect(self.tomarImagen)
+        self.ui.anadirarchivo_2.clicked.connect(self.tomarImagen)
 
     def buscar(self):
         options = QtWidgets.QFileDialog.Options()
@@ -79,7 +80,6 @@ class buscarArchivo:
             texto = archivo.read()
             print(texto)
             self.ui.texto.setText(texto)
-
 
     def tomarImagen(self):
         options = QtWidgets.QFileDialog.Options()
@@ -94,5 +94,8 @@ class buscarArchivo:
             texto = archivo.read()
             self.ui.texto.setText(str(mensaje))
             self.ui.resize(pixmap.width(), pixmap.height())
+
+            # Guardar el mensaje en un atributo del objeto ui
+            self.ui.mensaje_decodificado = mensaje
 
 
