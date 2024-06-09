@@ -1,8 +1,11 @@
+# ocultar.py
 from PyQt5 import QtWidgets, uic
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QFileDialog
-
+from cryptography.fernet import Fernet
 from PIL import Image
+import base64
+import hashlib
 
 caracter_terminacion = "11111111"
 
@@ -13,9 +16,6 @@ class OcultarMensaje:
         self.ui.anadirarchivo_2.clicked.connect(self.buscar_ruta_de_salida)
         self.ui.ocultarmensaje.clicked.connect(self.ocultar_mensaje)
 
-    def obtener_lsb(byte):
-        return byte[-1]
-
     @staticmethod
     def obtener_representacion_binaria(numero):
         return bin(numero)[2:].zfill(8)
@@ -25,11 +25,13 @@ class OcultarMensaje:
         return int(binario, 2)
 
     @staticmethod
-    def caracter_desde_codigo_ascii(numero):
-        return chr(numero)
+    def cifrar(mensaje, ruta_imagen_original, ruta_imagen_salida, contraseña):
+        # Generar una clave Fernet a partir de la contraseña
+        key = base64.urlsafe_b64encode(hashlib.sha256(contraseña.encode()).digest())
 
-    @staticmethod
-    def cifrar(mensaje, ruta_imagen_original, ruta_imagen_salida):
+        # Encriptar el mensaje con la contraseña
+        fernet = Fernet(key)
+        mensaje_encriptado = fernet.encrypt(mensaje.encode()).decode()
 
         imagen = Image.open(ruta_imagen_original)
         pixeles = imagen.load()
@@ -38,7 +40,7 @@ class OcultarMensaje:
         anchura = tamaño[0]
         altura = tamaño[1]
 
-        lista_bits_mensaje = OcultarMensaje.obtener_lista_de_bits(mensaje)
+        lista_bits_mensaje = OcultarMensaje.obtener_lista_de_bits(mensaje_encriptado)
 
         contador = 0
         longitud = len(lista_bits_mensaje)
@@ -82,7 +84,8 @@ class OcultarMensaje:
             print("Mensaje cifrado y guardado en", ruta_imagen_salida)
         except Exception as e:
             print(f"Error al guardar la imagen cifrada: {e}")
-        print("cifrado completado")
+        print("Cifrado completado")
+
     @staticmethod
     def obtener_lista_de_bits(texto):
         lista = []
@@ -107,6 +110,11 @@ class OcultarMensaje:
                                                    "Imágenes (*.png *.jpg *.bmp);;Todos los archivos (*)",
                                                    options=options)
         if imagepath:
+            imagen = Image.open(imagepath)
+            if imagen.size != (1024, 768):
+                QtWidgets.QMessageBox.warning(None, "Advertencia", "La imagen debe ser de 1024 x 768 píxeles.")
+                return
+
             self.ui.texto.setText(imagepath)
             pixmap = QPixmap(imagepath)
             self.ui.imagen.setPixmap(QPixmap(pixmap))
@@ -122,9 +130,14 @@ class OcultarMensaje:
 
     def ocultar_mensaje(self):
         mensaje = self.ui.mensaje.toPlainText()  # Obtener el texto del QTextEdit
+        contrasena = self.ui.contrasena.text()   # Obtener la contraseña
 
         if not mensaje:
             QtWidgets.QMessageBox.warning(self.ui, "Advertencia", "Debe ingresar un mensaje para cifrar.")
+            return
+
+        if not contrasena:
+            QtWidgets.QMessageBox.warning(self.ui, "Advertencia", "Debe ingresar una contraseña.")
             return
 
         ruta_imagen_original = self.ui.texto.toPlainText().strip()
@@ -138,5 +151,4 @@ class OcultarMensaje:
             QtWidgets.QMessageBox.warning(self.ui, "Advertencia", "Debe seleccionar una ruta y nombre de salida.")
             return
 
-        OcultarMensaje.cifrar(mensaje, ruta_imagen_original, ruta_imagen_salida)
-
+        OcultarMensaje.cifrar(mensaje, ruta_imagen_original, ruta_imagen_salida, contrasena)
