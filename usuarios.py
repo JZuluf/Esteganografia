@@ -24,18 +24,35 @@ class Usuario():
     def consultarUsuarios(self, conexion):
         try:
             with conexion.cursor() as cursor:
-                cursor.execute("SELECT * FROM usuario;")
+                cursor.execute("SELECT id_usuario,nombre,apellido,cedula,email,rol FROM usuario;")
                 usuarios = cursor.fetchall()
-                for usuario in usuarios:
-                    print(usuario)
+                return usuarios
+                """for usuario in usuario:
+                    print(usuario)"""
         except psycopg2.Error as e:
-            print("Ocurrio un error al consultar: ", e)
+            print("Ocurrió un error al consultar: ", e)
 
-    def verificar_credenciales(self, conexion, email, contrasena, rol):
+    def consultarNombre(self, conexion, nombre):
+        cursor = conexion.cursor()
+        query = "SELECT * FROM usuario WHERE nombre = %s"
+        cursor.execute(query, (nombre,))
+        resultados = cursor.fetchall()
+        cursor.close()
+        return resultados
+
+    def consultarApellido(self, conexion, apellido):
+        cursor = conexion.cursor()
+        query = "SELECT * FROM usuario WHERE apellido = %s"
+        cursor.execute(query, (apellido,))
+        resultados = cursor.fetchall()
+        cursor.close()
+        return resultados
+
+    def verificar_credenciales(self, conexion, email, contrasena):
         try:
             with conexion.cursor() as cursor:
-                consulta = "SELECT * FROM usuario WHERE email = %s AND contraseña = %s AND rol = %s;"
-                cursor.execute(consulta, (email, contrasena, rol))
+                consulta = "SELECT * FROM usuario WHERE email = %s AND contraseña = %s;"
+                cursor.execute(consulta, (email, contrasena))
                 usuario = cursor.fetchone()
                 if usuario:
                     print("Credenciales válidas")
